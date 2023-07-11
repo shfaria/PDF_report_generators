@@ -10,21 +10,53 @@ from django.http import HttpResponse
 from io import BytesIO
 import time
 from app.models import demoModel
-# demo = demoModel.objects.values_list()[0:20]
-# print(list(demo))
+from io import BytesIO, StringIO
+import pdftotext
+from openpyxl import Workbook
+import pdfplumber
 
-# for i in range(100):
-#     demoModel.objects.create(
-#     name = "bonny",
-#     name2 = "bonny",
-#     name3 = "bonny",
-#     name4 = "bonny",
-#     name5 = "bonny",
-#     name6 = "bonny",
-#     name7 = "bonny",
-#     name8 = "bonny",
-#     name9 = "clide"
-#     )
+#This is your data collected from your Vizard experiment
+subject1 = 'Tom'
+subject2 = 'Ana'
+results1 = [15,23,42,56,76]
+results2 = [34,67,94,31,56]
+
+#take the data and make ready for paragraph
+def dataToParagraph(name, data):
+   
+    p = '<strong>Subject name: </strong>' + name + '<br/>' + '<strong>Data: </strong>  ('
+    for i in range(len(data)):
+        p += str(data[i])
+        if i != len(data) - 1:
+            p += ', '
+        else:
+            p += ')'   
+    return p
+
+#take the data and convert to list of strings ready for table
+def dataToTable(name, data):
+   
+    data = [str(x) for x in data]
+    data.insert(0,name)
+    return data
+
+
+#create the table for our document
+def myTable(tabledata):
+
+    #first define column and row size
+    colwidths = (70, 50, 50, 50, 50, 50)
+    rowheights = (25, 20, 20)
+
+    t = Table(tabledata, colwidths, rowheights)
+
+    GRID_STYLE = TableStyle(
+    [('GRID', (0,0), (-1,-1), 0.25, colors.black),
+    ('ALIGN', (1,1), (-1,-1), 'RIGHT')]
+    )
+
+    t.setStyle(GRID_STYLE)
+    return t
 
 class Test(object):
     def __init__(self):
@@ -38,21 +70,7 @@ class Test(object):
         return x, y
         
 
-    def run(self):
-        """
-        Run the report
-        """
-        response = HttpResponse(content_type='application/pdf')
-        response['Content-Disposition'] = 'attachment; filename="hello.pdf"'
-        self.doc = SimpleDocTemplate(response,pagesize=A4, rightMargin=72,leftMargin=72, topMargin=72,bottomMargin=18)
-        # self.doc = SimpleDocTemplate(response)
-        self.story = [Spacer(1, 2.5*inch)]
-        self.createLineItems()
-        self.doc.build(self.story, onFirstPage=self.createDocument)
-
-        return response
-        
-
+    
     def createDocument(self, canvas, doc):
         """
         Create the document
@@ -103,7 +121,7 @@ class Test(object):
         """
         Create the line items
         """
-        text_data = ["Line", "DOS", "Procedure <br/> Modifier","Description", "Units", "Billed<br/>Charges","Type1<br/>Reductions", "Type2<br/>Reductions","Type3<br/>Reductions", "Allowance", "demo", "demo2"]
+        text_data = ["Line", "DOS", "Procedure","Description", "Units", "harges","Type1", "Type2","Type3", "Allowance", "demo", "demo2"]
         d = []
         font_size = 8
         centered = ParagraphStyle(name="centered", alignment=TA_CENTER)
@@ -150,7 +168,65 @@ class Test(object):
             )
         table.setStyle(LIST_STYLE)
         self.story.append(table)
+
+
+    def run(self):
+        # """
+        # Run the report
+        # """
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = 'attachment; filename="hello.pdf"'
+        # buffer = BytesIO()
+        # self.doc = SimpleDocTemplate(response,pagesize=A4, rightMargin=72,leftMargin=72, topMargin=72,bottomMargin=18)
+        # # self.doc = SimpleDocTemplate(response)
+        # self.story = [Spacer(1, 2.5*inch)]
+        # self.createLineItems()
+        # self.doc.build(self.story, onFirstPage=self.createDocument)
+
+        # buffer.write(response.content)
+        # buffer.seek(0)
+        # pdf = pdfplumber.open(buffer, laparams = { "line_overlap": 0.7 })
+        # p0 = pdf.pages[0].extract_words()
+        # # print(p0)
+        # first_page = pdf.pages[0]
+        # first_lines = first_page.extract_text(layout=True)
+        # # print(first_lines.split("\t"))
+        # # for i in first_lines.split("\n"):
+        # #     print(i)
+        # print(first_lines.split("\n"))
+     
+        # table = first_page.extract_table(table_settings={
+        #     "vertical_strategy": "text",
+        #     "horizontal_strategy": "text",
+        # })
+        # table = [row for row in table if ''.join([str(i) for i in row]) != '']
+        # print(table)
+        with open("static/hellopy.pdf", "rb") as f:
+            pdf = pdftotext.PDF(f, physical=True)
+        page1 = pdf[0].split("\n")
+        print(page1)
+        wb = Workbook(write_only=True)
+        ws = wb.create_sheet()
+        ws.sheet_view.showGridLines = False
         
+        for line in page1:
+            if line == '\x0c':
+                continue
+            line = line.split("\t")
+            line = list(line)
+            # print(line)
+            ws.append(line)
+        # for eachline in first_lines
+        # print(first_lines.split("\n"))
+
+        wb.save('static/plum.xlsx')
+
+        # buffer.seek(0)
+
+        return response
+
+        
+
 if __name__ == "__main__":
     t = Test()
     t.run()
@@ -160,3 +236,4 @@ def demo(request):
     t = Test()
     result = t.run()
     return result
+

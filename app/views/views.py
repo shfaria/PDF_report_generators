@@ -13,22 +13,9 @@ from reportlab.lib.units import inch
 from reportlab.lib.units import inch
 
 from reportlab.platypus.tables import Table,TableStyle,colors
-#from my_table_data import my_data # import the data
-# my_path='G:\\My drive\\testing\\pypdf2\\my_pdf.pdf' # change path, file name 
 
-# my_data= [['ID', 'Name', 'Class', 'Mark', 'Gender'],
-# (1, 'John Deo', 'Four', 75, 'female'),
-# (2, 'Max Ruin', 'Three', 85, 'male'),
-# (3, 'Arnold', 'Three', 55, 'male')]
+# Load your PDF
 
-# my_doc=SimpleDocTemplate(my_path,pagesize=letter)
-# c_width=[0.4*inch,1.5*inch,1*inch,1*inch,1*inch]
-# t=Table(my_data,rowHeights=20,repeatRows=1,colWidths=c_width)
-# t.setStyle(TableStyle([('BACKGROUND',(0,0),(-1,0),colors.lightgreen),
-# ('FONTSIZE',(0,0),(-1,-1),10)]))
-# elements=[]
-# elements.append(t)
-# my_doc.build(elements) 
 
 def gen_table(request):
     response = HttpResponse(content_type='application/pdf')
@@ -49,6 +36,9 @@ def gen_table(request):
 
     doc.build(elements)
     return response
+
+
+
 
 def home(request):
     return render(request, 'app/home.html')
